@@ -1,0 +1,609 @@
+Coastal Marine Heatwaves (MHWs) in the South West Tropical Pacific (SWTP)
+=============
+
+
+Description
+-----------
+This dataset contains information on all coastal MHWs for 12 Pacific Island Countries and Territories (PICTs) in the SWTP.
+MHWs were detected using the Hobday et al.(2016) method with a 90th percentile threshold and using OSTIA temperature product for the period 1993 to 2023 with the 1993 to 2019 period used as a baseline.
+
+The 12 PICTs are as follows:
+New Caledonia labelled as "newcal" in the filenames.
+Solomon Islands labelled as "solo" in the filenames.
+Vanuatu 
+Fiji 
+Tonga
+Wallis and Futuna labelled as "wf" in the filenames.
+Samoa
+American Samoa labelled as "amsam" in the filenames.
+Niue
+Tokelau
+Tuvalu
+Cook Islands labelled as "cooks" in the filenames.
+
+Files with filename "{countryname}_coastalpoints.csv"provides information on all points along the coastlines of the 12 PICTs where MHW detection was conducted.
+These points were identified as best locations for MHW detection as they were located further away from land (and land based contaminants in the air) in waters deeper than 200m based on the GLORYS12 reanalysis product. 
+Temperature at these coastal points were extracted from Copernicus. This was done in 2 parts as the temperature product were available in 2 parts with slightly different filenames;  Dataset_id = "METOFFICE-GLO-SST-L4-REP-OBS-SST", for the 1993 to 2007 period and Dataset_id = "METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2" for the period 2007 to 2023. The script is given below. These files were later concatenated to have continuous temperature timeseries from 1993 to 2023 for MHW detection.
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+Scripts
+-------
+
+Here is an example script to extract temperature along coastal Fiji from Copernicus.
+___________________________________________________________________________________
+
+Part 1
+
+# Import modules
+import copernicusmarine
+import pandas as pd
+copernicusmarine.login()
+
+
+coastal_points = pd.read_csv('/media/shilpa/Expansion/coastal_points/fiji_coastalpoints.csv')
+
+
+for i in range (len(coastal_points)):
+    lat = coastal_points.latitude[i]
+    print ('lat =',lat)
+    lon = coastal_points.longitude[i]
+    print ('lon =',lon)
+
+    if lon == -180.0:
+        minimum_longitude = 180,
+        maximum_longitude = 180,
+        request_dataframe = copernicusmarine.read_dataframe(
+        dataset_id = "METOFFICE-GLO-SST-L4-REP-OBS-SST",
+        minimum_latitude = lat,
+        maximum_latitude = lat,
+        variables = ["analysed_sst"],
+        start_datetime = "1993-01-01",
+        end_datetime = "2006-12-31")
+
+
+        print(i)
+
+        request_dataframe.to_csv(f"/media/shilpa/Expansion/ostia_fiji/fiji_coastal{i}_firstpart.csv")]
+
+    else:
+
+
+# Load dataframe
+        request_dataframe = copernicusmarine.read_dataframe(
+        dataset_id = "METOFFICE-GLO-SST-L4-REP-OBS-SST",
+        minimum_longitude = lon,
+        maximum_longitude = lon,
+        minimum_latitude = lat,
+        maximum_latitude = lat,
+        variables = ["analysed_sst"],
+        start_datetime = "1993-01-01",
+        end_datetime = "2006-12-31")
+
+# Print loaded dataset information
+        print(i)
+
+        request_dataframe.to_csv(f"/media/shilpa/Expansion/ostia_fiji/fiji_coastal{i}_firstpart.csv")
+
+
+Part 2
+
+# Import modules
+import copernicusmarine
+import pandas as pd
+copernicusmarine.login()
+
+
+coastal_points = pd.read_csv('/media/shilpa/Expansion/coastal_points/fiji_coastalpoints.csv')
+
+for i in range (len(coastal_points)):
+    lat = coastal_points.latitude[i]
+    print ('lat =',lat)
+    lon = coastal_points.longitude[i]
+    print ('lon =',lon)
+
+    if lon == -180.0:
+        minimum_longitude = 180,
+        maximum_longitude = 180,
+        request_dataframe = copernicusmarine.read_dataframe(
+        dataset_id = "METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2",
+        minimum_latitude = lat,
+        maximum_latitude = lat,
+        variables = ["analysed_sst"],
+        start_datetime = "1993-01-01",
+        end_datetime = "2023-12-31")
+
+
+        print(i)
+
+        request_dataframe.to_csv(f"/media/shilpa/Expansion/ostia_fiji/fiji_coastal{i}_secondpart.csv")
+
+    else:
+
+
+# Load dataframe
+        request_dataframe = copernicusmarine.read_dataframe(
+        dataset_id = "METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2",
+        minimum_longitude = lon,
+        maximum_longitude = lon,
+        minimum_latitude = lat,
+        maximum_latitude = lat,
+        variables = ["analysed_sst"],
+        start_datetime = "1993-01-01",
+        end_datetime = "2023-12-31")
+
+# Print loaded dataset information
+        print(i)
+
+        request_dataframe.to_csv(f"/media/shilpa/Expansion/ostia_fiji/fiji_coastal{i}_secondpart.csv")
+
+
+Requirements
+------------
+The scripts are using Python and can be run in an Anaconda environment.
+
+Input Data
+----------
+Coastal point latitude and longitude.
+
+Output
+------
+Temperature timeseries at each coastal location. In 2 parts, need to concatenate later for MHW detection.
+
+
+Here is an example script for the temperature files concatenation for each coastal point.
+_________________________________________________________________________________________
+
+import pandas as pd
+
+for i in range (702):  # 702 is the number of coastal points for coastal Fiji
+# Load the CSV files
+    print(i)
+
+    file1 = pd.read_csv(f'/media/shilpa/Expansion/ostia_fiji/fiji_coastal{i}_firstpart.csv')
+    print ('lat1 = ',file1.latitude[1],'lat2 =',file1.longitude[1])
+
+    file1_ = pd.read_csv(f'/media/shilpa/Expansion/ostia_fiji/fiji_coastal{i}_secondpart.csv')
+    print ('lat2 = ',file1_.latitude[1],'lat2 =',file1_.longitude[1])
+
+# Concatenate the files along the columns
+    df2_no_header = file1_.reset_index(drop=True)
+    combined = pd.concat([file1, df2_no_header], axis=0, ignore_index=True)
+
+# Ensure the 'time' column is in datetime format
+    combined['time'] = pd.to_datetime(combined['time'])
+
+# Filter rows to keep only the dates between 1993-01-01 and 2024-10-01
+    start_date = '1993-01-01'
+    end_date = '2023-10-24'
+    filtered = combined[(combined['time'] >= start_date) & (combined['time'] <= end_date)]
+    filtered['sst_degC'] = (combined.analysed_sst) - 273.15
+
+# Save the result to a new CSV file
+    filtered.to_csv(f'/media/shilpa/Expansion/ostia_full_fiji/fiji_93_23_{i}.csv', index=False)
+
+Requirements
+------------
+The scripts are using Python and can be run in an Anaconda environment.
+
+Input Data
+----------
+The first and secound parts of the temperature timeseries for each coastal point.
+
+Output
+------
+Temperature timeseries at each coastal point for the period 1993 to 2023.
+
+
+
+Here is an example of MHW detection for coastal points in coastal Fiji.
+_______________________________________________________________________
+
+# standard imports
+from functools import partial
+import xarray as xr
+import pandas as pd
+import numpy as np
+from datetime import date
+import statistics
+import marineHeatWaves as mhw
+import scipy as sp
+from scipy import linalg
+from scipy import stats
+import scipy.ndimage as ndimage
+from datetime import date
+from functools import partial
+
+country = "fiji"
+for i in range (702): # 702 is the number of coastal points in Fiji
+# Load the CSV files
+    print(i)
+    file = pd.read_csv(f'/media/shilpa/Expansion/ostia_full_fiji/fiji_93_23_{i}.csv')
+    target_latitude = file.latitude[1]
+    target_longitude = file.longitude[1]
+    temp_ = file['sst_degC']
+    temp = np.array(temp_)
+    strtime = file['time']
+    pdtime = pd.to_datetime(strtime)
+    t = np.array([date.toordinal(x) for x in pdtime])
+    
+    
+    mhws, clim = mhw.detect(t, temp)
+
+    events = mhws['n_events']
+    print(events)
+
+    if events == 0:
+        print('no events at this location')
+
+    else:
+        date_start = mhws['date_start'] 
+        date_end = mhws['date_end'] 
+        index_start = mhws['index_start'] 
+        index_end = mhws['index_end'] 
+        index_peak = mhws['index_peak'] 
+        date_peak = mhws['date_peak'] 
+        duration = mhws['duration'] 
+        intensity_max = mhws['intensity_max']
+        #intensity_max_max = mhws['intensity_max_max']
+        intensity_mean = mhws['intensity_mean'] 
+        intensity_var = mhws['intensity_var']
+        intensity_cumulative = mhws['intensity_cumulative'] 
+        category = mhws['category'] 
+        rateonset = mhws['rate_onset']
+        ratedecline = mhws['rate_decline'] 
+        lat = [target_latitude] * events
+        lon = [target_longitude] * events
+        country = [country_name] * events
+        reaction_window_days =  [x - y for x, y in zip((mhws['index_peak']),(mhws['index_start']))]
+        coping_window_days =  [x - y for x, y in zip((mhws['index_end']),(mhws['index_peak']))]
+        #recovery_window_days =   [(x - y for x, y in zip((mhws['index_start'][1:]),(mhws['index_end'][:-1]))),np.nan]
+
+
+
+        d = {'country': country,'latitude':lat, 'longitude':lon,'index_start': index_start, 'index_end': index_end,'index_peak': index_peak,
+                     'date_start': date_start, 'date_end': date_end, 'date_peak': date_peak, 
+                     'duration' : duration, 'intensity_max': intensity_max, 'intensity_mean' : intensity_mean,
+                     'intensity_cumulative':intensity_cumulative, 'category':category, 'rateonset': rateonset, 
+                     'ratedecline':ratedecline, 'reaction_window_days':reaction_window_days,'coping_window_days':coping_window_days}#,
+                     #'recovery_window_days':recovery_window_days}
+
+        df = pd.DataFrame(data=d)
+        df.to_csv('/home/shilpa/glory_mat_analysis/%s_all_mhws_at_%s_%s.csv'%(country_name,target_latitude,target_longitude))
+
+        # spatial extent script comes here
+        #index_start = mhws['index_start'] 
+        #index_end = mhws['index_end']
+
+        #z = np.zeros(len(t))            
+        #for i in range(events):    
+        #    z[index_start[i]:index_end[i]]=1
+
+        #spatial_extent = z
+
+        #lat = [target_latitude] * (len(t)) 
+        #lon = [target_longitude] * (len(t)) 
+        #country = [country_name] * (len(t)) 
+
+        #d3 = {'country':country,'latitude':lat, 'longitude':lon,
+        #        'time' : ds.time.values, 'spatial_extent' : spatial_extent }
+        #df3 = pd.DataFrame(data=d3)
+        #df3.to_csv('/home/shilpa/glory_mat_analysis/coastal_events_test/%s_spatial_extent_mhws_at_%s_%s.csv'%(country_name,target_latitude,target_longitude))
+
+
+
+        mhwBlock = mhw.blockAverage(t, mhws)
+
+        total_days = mhwBlock['total_days'] 
+        total_icum /= mhwBlock['total_icum']
+
+        mean_per_year,trend, dtrend = mhw.meanTrend(mhwBlock,alpha=0.05)
+
+        #mean_per_year
+        count_mean_per_year = mean_per_year['count']
+        duration_mean_per_year = mean_per_year['duration']
+        intensity_mean_mean_per_year = mean_per_year['intensity_max']             
+        intensity_max_max_mean_per_year = mean_per_year['intensity_max_max']
+        intensity_mean_mean_per_year = mean_per_year['intensity_mean']   
+        intensity_var_mean_per_year = mean_per_year['intensity_var']      
+        intensity_cumulative_mean_per_year = mean_per_year['intensity_cumulative']     
+        rate_onset_mean_per_year = mean_per_year['rate_onset']
+        rate_decline_mean_per_year = mean_per_year['rate_decline']          
+        total_days_mean_per_year = mean_per_year['total_days']        
+        total_icum_mean_per_year = mean_per_year['total_icum']  
+
+        #trend_per_decade
+        count_trend_per_decade = (10*trend['count'])
+        duration_trend_per_decade = (10*trend['duration'])
+        intensity_max_trend_per_decade = (10*trend['intensity_max'])             
+        intensity_max_max_trend_per_decade = (10*trend['intensity_max_max'])
+        intensity_mean_trend_per_decade = (10*trend['intensity_mean'])   
+        intensity_var_trend_per_decade = (10*trend['intensity_var'])     
+        intensity_cumulative_trend_per_decade = (10*trend['intensity_cumulative'])     
+        rate_onset_trend_per_decade = (10*trend['rate_onset'])
+        rate_decline_trend_per_decade = (10*trend['rate_decline'])          
+        total_days_trend_per_decade = (10*trend['total_days'])        
+        total_icum_trend_per_decade = (10*trend['total_icum'])    
+
+        #significance of trend
+        if (np.abs(trend['count']) > dtrend['count']) == False:
+            sig_trend_per_decade_count =  0
+        elif (np.abs(trend['count']) > dtrend['count'])== True:
+            sig_trend_per_decade_count =  1 
+        print(sig_trend_per_decade_count)
+
+        if (np.abs(trend['duration']) > dtrend['duration']) == False:
+            sig_trend_per_decade_duration =  0
+        elif (np.abs(trend['duration']) > dtrend['duration'])== True:
+            sig_trend_per_decade_duration =  1  
+        print(sig_trend_per_decade_duration)
+
+        if (np.abs(trend['intensity_max']) > dtrend['intensity_max']) == False:
+            sig_trend_per_decade_intensity_max =  0
+        elif (np.abs(trend['intensity_max']) > dtrend['intensity_max'])== True:
+            sig_trend_per_decade_intensity_max =  1 
+
+        if (np.abs(trend['intensity_max_max']) > dtrend['intensity_max_max']) == False:
+            sig_trend_per_decade_intensity_max_max =  0
+        elif (np.abs(trend['intensity_max_max']) > dtrend['intensity_max_max'])== True:
+            sig_trend_per_decade_intensity_max_max =  1  
+
+        if (np.abs(trend['intensity_mean']) > dtrend['intensity_mean']) == False:
+            sig_trend_per_decade_intensity_mean =  0
+        elif (np.abs(trend['intensity_mean']) > dtrend['intensity_mean'])== True:
+            sig_trend_per_decade_intensity_mean =  1 
+
+        if (np.abs(trend['intensity_var']) > dtrend['intensity_var']) == False:
+            sig_trend_per_decade_intensity_var =  0
+        elif (np.abs(trend['intensity_var']) > dtrend['intensity_var'])== True:
+            sig_trend_per_decade_intensity_var =  1  
+
+        if (np.abs(trend['intensity_cumulative']) > dtrend['intensity_cumulative']) == False:
+            sig_trend_per_decade_intensity_cumulative =  0
+        elif (np.abs(trend['intensity_cumulative']) > dtrend['intensity_cumulative'])== True:
+            sig_trend_per_decade_intensity_cumulative =  1  
+
+        if (np.abs(trend['rate_onset']) > dtrend['rate_onset']) == False:
+            sig_trend_per_decade_rate_onset =  0
+        elif (np.abs(trend['rate_onset']) > dtrend['rate_onset'])== True:
+            sig_trend_per_decade_rate_onset =  1 
+
+        if (np.abs(trend['rate_decline']) > dtrend['rate_decline']) == False:
+            sig_trend_per_decade_rate_decline =  0
+        elif (np.abs(trend['rate_decline']) > dtrend['rate_decline'])== True:
+            sig_trend_per_decade_rate_decline =  1  
+
+        if (np.abs(trend['total_days']) > dtrend['total_days']) == False:
+            sig_trend_per_decade_total_days =  0
+        elif (np.abs(trend['total_days']) > dtrend['total_days'])== True:
+            sig_trend_per_decade_total_days =  1 
+
+        if (np.abs(trend['total_icum']) > dtrend['total_icum']) == False:
+            sig_trend_per_decade_total_icum =  0
+        elif (np.abs(trend['total_icum']) > dtrend['total_icum'])== True:
+            sig_trend_per_decade_total_icum =  1  
+
+        #mean and std by event
+        mean_duration = statistics.mean(duration)
+        std_duration = statistics.stdev(duration)
+
+        mean_intensity_mean = statistics.mean(intensity_mean)
+        std_intensity_mean = statistics.stdev(intensity_mean)
+
+        mean_intensity_var = statistics.mean(intensity_var)
+        std_intensity_var = statistics.stdev(intensity_var)
+
+        mean_intensity_max = statistics.mean(intensity_max)
+        std_intensity_max = statistics.stdev(intensity_max)
+
+        #mean_intensity_max_max = statistics.mean(intensity_max_max)
+        #std_intensity_max_max = statistics.stdev(intensity_max_max)
+
+        mean_intensity_cumulative = statistics.mean(intensity_cumulative)
+        std_intensity_cumulative = statistics.stdev(intensity_cumulative)
+
+        mean_rate_onset = statistics.mean(rateonset)
+        std_rate_onset = statistics.stdev(rateonset)
+
+        mean_rate_decline = statistics.mean(ratedecline)
+        std_rate_decline = statistics.stdev(ratedecline)
+
+        mean_total_days = statistics.mean(total_days)
+        std_total_days = statistics.stdev(total_days)
+
+        mean_total_icum = statistics.mean(total_icum)
+        std_total_icum= statistics.stdev(total_icum)
+
+        d2 = {'country':country_name,'latitude':[target_latitude], 'longitude':[target_longitude],
+            'mean_duration' : mean_duration, 'std_duration' : std_duration,
+            'mean_intensity_mean' : mean_intensity_mean, 'std_intensity_mean' : std_intensity_mean,
+            'mean_intensity_var' : mean_intensity_var, 'std_intensity_var' : std_intensity_var,
+            'mean_intensity_max' : mean_intensity_max, 'std_intensity_max' : std_intensity_max,
+            'mean_intensity_cumulative' : mean_intensity_cumulative, 'std_intensity_cumulative' : std_intensity_cumulative,
+            'mean_rate_onset' : mean_rate_onset, 'std_rate_onset' : std_rate_onset,
+            'mean_rate_decline' : mean_rate_decline, 'std_rate_decline' : std_rate_decline,
+            'mean_total_days' : mean_total_days, 'std_total_days' : std_total_days,
+            'mean_total_icum' : mean_total_icum, 'std_total_icum' : std_total_icum,
+
+            'sig_trend_per_decade_count' : sig_trend_per_decade_count,
+            'sig_trend_per_decade_duration' :sig_trend_per_decade_duration,
+            'sig_trend_per_decade_intensity_max' :sig_trend_per_decade_intensity_max,
+            'sig_trend_per_decade_intensity_max_max' : sig_trend_per_decade_intensity_max_max,
+            'sig_trend_per_decade_intensity_mean' : sig_trend_per_decade_intensity_mean,
+            'sig_trend_per_decade_intensity_var' :sig_trend_per_decade_intensity_var,
+            'sig_trend_per_decade_intensity_cumulative' : sig_trend_per_decade_intensity_cumulative,
+            'sig_trend_per_decade_rate_onset' :sig_trend_per_decade_rate_onset,
+            'sig_trend_per_decade_rate_decline' : sig_trend_per_decade_rate_decline,
+            'sig_trend_per_decade_total_days' : sig_trend_per_decade_total_days,
+            'sig_trend_per_decade_total_icum' :sig_trend_per_decade_total_icum,
+
+            'sum_total_days' :np.sum(total_days),
+            'sum_total_icum' : np.sum(total_icum),
+            'number_of_events' :events,
+
+            'count_trend_per_decade' : count_trend_per_decade,
+            'duration_trend_per_decade' : duration_trend_per_decade,
+            'intensity_max_trend_per_decade' :  intensity_max_trend_per_decade,            
+            'intensity_max_max_trend_per_decade' : intensity_max_max_trend_per_decade,
+            'intensity_mean_trend_per_decade' :   intensity_mean_trend_per_decade,
+            'intensity_var_trend_per_decade' : intensity_var_trend_per_decade,  
+            'intensity_cumulative_trend_per_decade' :  intensity_cumulative_trend_per_decade,  
+            'rate_onset_trend_per_decade' : rate_onset_trend_per_decade,
+            'rate_decline_trend_per_decade' :  rate_decline_trend_per_decade,        
+            'total_days_trend_per_decade' : total_days_trend_per_decade,       
+            'total_icum_trend_per_decade' : total_icum_trend_per_decade,
+
+            'count_mean_per_year' : count_mean_per_year,
+            'duration_mean_per_year' : duration_mean_per_year,
+            'intensity_mean_mean_per_year' : intensity_mean_mean_per_year,             
+            'intensity_max_max_mean_per_year' : intensity_max_max_mean_per_year,
+            'intensity_mean_mean_per_year' : intensity_mean_mean_per_year,   
+            'intensity_var_mean_per_year' : intensity_var_mean_per_year,      
+            'intensity_cumulative_mean_per_year' : intensity_cumulative_mean_per_year,     
+            'rate_onset_mean_per_year' : rate_onset_mean_per_year,
+            'rate_decline_mean_per_year' : rate_decline_mean_per_year,          
+            'total_days_mean_per_year' : total_days_mean_per_year,        
+            'total_icum_mean_per_year' : total_icum_mean_per_year
+
+            }
+
+
+        df2 = pd.DataFrame(data=d2)
+        df2.to_csv('/home/shilpa/glory_mat_analysis/coastal_events_test/%s_mean_trends_mhws_at_%s_%s.csv'%(country_name,target_latitude,target_longitude))
+        
+        
+        
+   
+
+Requirements
+------------
+The scripts are using Python and can be run in an Anaconda environment.
+
+Input Data
+----------
+Temperature timeseries at each coastal point. 
+
+Output
+------
+There are 2 types of output files:
+1. {country_name}_all_mhws_at_{target_latitude}_{target_longitude}.csv
+
+2. {country_name}_mean_trends_mhws_at_{target_latitude}_{target_longitude}.csv
+
+The first type of files contains information on the properties of each MHW at each coastal point. 
+Refer to Marine heatwaves package documents developed by Eric Oliver to understand the calculation of each MHW property (https://github.com/ecjoliver/marineHeatWaves).
+The second type of file contains trends, means and standard deviation of MHW properties at each coastal point. 
+
+
+These files can be easily saved into a single dataframe. Here is an example with Fiji data.
+__________________________________________________________________________________________
+
+directory = '/media/shilpa/Expansion/ostia_mhw_fiji'
+coastal_files_ = [file for file in os.listdir(directory) if file.startswith("Fiji_mean")]
+
+# Read all CSV files and concatenate into a single DataFrame
+dfs_ = []
+for file in coastal_files_:
+    # Handle file names with spaces by adding double quotes around the file path
+    file_path = os.path.join(directory, file)
+    df = pd.read_csv(file_path)
+    dfs_.append(df)
+
+# Concatenate all DataFrames
+concatenated_dfs_= pd.concat(dfs_, ignore_index=True)
+
+float_cols__ = concatenated_dfs_.select_dtypes(include='float').columns.difference(['latitude', 'longitude'])
+
+# Round those float columns to 3 decimals
+concatenated_dfs_[float_cols__] = concatenated_dfs_[float_cols__].round(3)
+
+concatenated_dfs_.to_csv('/media/shilpa/Expansion/ostia_coastal_mhws_dataverse/means_trends_all_location_country_coastal/fiji.csv')
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+In summary, the main output of the "{country_name}_all_mhws_at_{target_latitude}_{target_longitude}.csv" files are:
+
+
+•country - country of coastal MHW detection
+•latitude,longitude - location of coastal point
+•index_start,index_end,index_peak - timestep when MHW started, ended and peaked
+•date_start,date_end,date_peak - date of MHW start, end and peak
+•duration - duration of each MHW event (days)
+•intensity_max,intensity_mean,intensity_cumulative - maximum intensity (deg. C), mean intensity (deg. C) and cummulative intensity (deg. C x days) of each MHW
+•category - measure of severity of event
+•rateonset,ratedecline - onset and decline rate of MHW event (deg. C / days)
+•reaction_window_days,coping_window_days - days from start of event to peak of MHW event and days from peak of MHW event to end of the event.
+
+
+
+In summary, the main output of the "{country_name}_mean_trends_mhws_at_{target_latitude}_{target_longitude}.csv" files are:
+
+
+•country - country of coastal MHW detection
+•latitude,longitude - location of coastal point
+•mean_duration,std_duration - mean and standard deviation of MHW duration at that coastal point
+•mean_intensity_mean,std_intensity_mean - mean and standard deviation of MHW intensity mean at that coastal point
+•mean_intensity_var,std_intensity_var - mean and standard deviation of MHW intensity variability at that coastal point
+•mean_intensity_max,std_intensity_max - mean and standard deviation of MHW intensity max at that coastal point
+•mean_intensity_cumulative,std_intensity_cumulative - mean and standard deviation of MHW intensity cumulative at that coastal point
+•mean_rate_onset,std_rate_onset - mean and standard deviation of MHW rate onset at that coastal point
+•mean_rate_decline,std_rate_decline - mean and standard deviation of MHW rate decline at that coastal point
+•mean_total_days,std_total_days - mean and standard deviation of MHW days each year.
+•mean_total_icum,std_total_icum - mean and standard deviation of total cumulative intensity of all events each year.
+•sig_trend_per_decade_count - significance and trend of number of events per year
+•sig_trend_per_decade_duration - significance and trend of mHW duration per year 
+•sig_trend_per_decade_intensity_max - significance and trend of MHW intensity max per year
+•sig_trend_per_decade_intensity_max_max - significance and trend of MHW max intensity max per year
+•sig_trend_per_decade_intensity_mean - significnace and trend of MHW intensity mean per year
+•sig_trend_per_decade_intensity_var - significance and trend of MHW intensity variability per year
+•sig_trend_per_decade_intensity_cumulative - significance and trend of MHW intensity cumulative per year.
+•sig_trend_per_decade_rate_onset - significance and trend of MHW onset rate per year
+•sig_trend_per_decade_rate_decline - significance and trend of MHW decline rate per year
+•sig_trend_per_decade_total_days - significance and trend of MHW days per year
+•sig_trend_per_decade_total_icum - significance and trend of total cumulative intensity per year
+•sum_total_days,sum_total_icum - sum no. of MHW days and sum cumulative intensity 
+•number_of_events - sum number of MHW events
+•count_trend_per_decade - number of events per decade
+•duration_trend_per_decade - MHW duration per decade
+•intensity_max_trend_per_decade - MHW intensity max per decade
+•intensity_max_max_trend_per_decade - max MHW intensity max per decade
+•intensity_mean_trend_per_decade - MHW intensity mean per decade
+•intensity_var_trend_per_decade - MHW intensity variability per decade
+•intensity_cumulative_trend_per_decade - MHW intensity cumulative per decade
+•rate_onset_trend_per_decade - MHW rate onset per decade 
+•rate_decline_trend_per_decade - MHW rate decline per decade
+•total_days_trend_per_decade - MHW days per decade
+•total_icum_trend_per_decade - MHW cumulative intensity per decade
+•count_mean_per_year - mean number of MHW events per year
+•duration_mean_per_year - mean MHW duration per year
+•intensity_mean_mean_per_year - mean intensity mean per year
+•intensity_max_max_mean_per_year - mean maximum intensity max per year 
+•intensity_var_mean_per_year - mean intensity variability per year
+•intensity_cumulative_mean_per_year - mean intensity cumulative per year 
+•rate_onset_mean_per_year - mean rate onset per year
+•rate_decline_mean_per_year - mean rate decline per year 
+•total_days_mean_per_year - mean sum MHW days per year
+•total_icum_mean_per_year - mean sum intensity cumulative per year
+
+
+
+Author, ORCID IDs and contact
+-----------------------------
+Shilpa Lal, https://orcid.org/0009-0004-1016-2051 , shilpashupriyalal@gmail.com
+Sophie Cravatte:  https://orcid.org/0000-0002-2439-8952 , sophie.cravatte@ird.fr
+Christophe Menkes:  https://orcid.org/0000-0002-1457-9696 ,christophe.menkes@ird.fr
+Jed Macdonald: https://orcid.org/0000-0002-5769-2912 , jedimacdonald@gmail.com
+Romain Le Gendre: https://orcid.org/0000-0001-7015-8290, Romain.Le.Gendre@ifremer.fr
+Ines Mangolte:  https://orcid.org/0000-0002-0358-844X, ines.mangolte@ird.fr
+Cyril Dutheil: https://orcid.org/0000-0001-6891-2389, cyril.dutheil@ird.fr
+Neil J. Holbrook: https://orcid.org/0000-0002-3523-6254, neil.holbrook@utas.edu.au
+Simon Nicol: https://orcid.org/0000-0001-8193-8719, simonn@spc.int
+
+
+
+Reference
+---------
+Hobday, A.J., Alexander, L.V., Perkins, S.E., Smale, D.A., Straub, S.C., Oliver, E.C., Benthuysen, J.A., Burrows, M.T., Donat, M.G., Feng, M. and Holbrook, N.J., 2016. A hierarchical approach to defining marine heatwaves. Progress in oceanography, 141, pp.227-238, https://doi.org/10.1016/j.pocean.2015.12.014.(https://www.sciencedirect.com/science/article/pii/S0079661116000057)
+
+
+Date
+----
+These files were produced in 2024 and compiled in the current form in August 2025.
